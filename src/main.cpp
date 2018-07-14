@@ -5,15 +5,15 @@
 
 #define ON "ON"
 #define OFF "OFF"
+#define SUBSCRIBE_STATE_TOPIC "ha/switch1"
+#define PUBLISH_STATE_TOPIC "ha/switch1/state"
+#define LEDPin 13
 #define IS_DEBUG_MODE true
+
+bool switchState = false;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
-int SwitchedPin = 12, LEDPin = 13;
-bool HassSwitch = false;
-String switch1;
-String strTopic;
-String strPayload;
 
 void turnOnSwitchWithNotify();
 void turnOffSwitchWithNotify();
@@ -68,7 +68,7 @@ void reconnect()
     {
       debbugLog("connected\r\n");
       publishState();
-      client.subscribe("ha/#");
+      client.subscribe(SUBSCRIBE_STATE_TOPIC);
     }
     else
     {
@@ -82,52 +82,50 @@ void reconnect()
 
 void publishState()
 {
-  if (HassSwitch)
+  if (switchState)
   {
-    client.publish("ha/switch1/state", ON);
+    client.publish(PUBLISH_STATE_TOPIC, ON);
     debbugLog("ON\r\n");
   }
   else
   {
-    client.publish("ha/switch1/state", OFF);
+    client.publish(PUBLISH_STATE_TOPIC, OFF);
     debbugLog("OFF\r\n");
   }
 }
 
 void turnOnSwitchWithNotify()
 {
-  digitalWrite(SwitchedPin, HIGH);
   digitalWrite(LEDPin, LOW);
-  HassSwitch = true;
+  switchState = true;
   publishState();
 }
 
 void turnOffSwitchWithNotify()
 {
-  digitalWrite(SwitchedPin, HIGH);
   digitalWrite(LEDPin, LOW);
-  HassSwitch = true;
+  switchState = true;
   publishState();
 }
 
 void setupPins()
 {
-  pinMode(SwitchedPin, OUTPUT);
-  digitalWrite(SwitchedPin, LOW);
+  pinMode(LEDPin, OUTPUT);
+  digitalWrite(LEDPin, LOW);
 }
 
 boolean shouldTurnOn(char *topic, byte *payload, unsigned int length)
 {
   payload[length] = '\0';
-  strTopic = String((char *)topic);
-  return strTopic == "ha/switch1/action" && String((char *)payload) == ON;
+  String strTopic = String((char *)topic);
+  return strTopic == SUBSCRIBE_STATE_TOPIC && String((char *)payload) == ON;
 }
 
 boolean shouldTurnOff(char *topic, byte *payload, unsigned int length)
 {
   payload[length] = '\0';
-  strTopic = String((char *)topic);
-  return strTopic == "ha/switch1/action" && String((char *)payload) == OFF;
+  String strTopic = String((char *)topic);
+  return strTopic == SUBSCRIBE_STATE_TOPIC && String((char *)payload) == OFF;
 }
 
 void setup_wifi()
